@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Forecaster - GRU Neural Network</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌬️ Air Quality Forecaster</h1>
+            <p class="subtitle">Powered by GRU (Gated Recurrent Unit) Neural Network</p>
+            <div id="dataset-title" class="dataset-title">📍 Analyzing: Indian Air Quality Index (AQI) Dataset</div>
+        </header>
+
+        <!-- Dataset Switcher -->
+        <div class="card dataset-switcher" id="dataset-switcher" style="display: none;">
+            <h2>📂 Active Dataset</h2>
+            <div class="switcher-buttons">
+                <button id="use-default-btn" class="btn btn-dataset active">
+                    🏠 Default Data (Simulated)
+                </button>
+                <button id="use-uploaded-btn" class="btn btn-dataset">
+                    📁 Uploaded Data
+                </button>
+            </div>
+            <div id="dataset-source-info" class="dataset-source-info"></div>
+        </div>
+
+        <!-- Current Air Quality Status -->
+        <div class="card">
+            <h2>📊 Current Air Quality</h2>
+            <div class="current-status">
+                <div class="aqi-display">
+                    <div id="current-aqi" class="aqi-value">--</div>
+                    <div class="aqi-label">AQI</div>
+                </div>
+                <div class="aqi-details">
+                    <div id="aqi-category" class="aqi-category">Loading...</div>
+                    <div id="pm25-value" class="pm25-value">PM2.5: -- µg/m³</div>
+                    <div id="last-updated" class="last-updated">Last updated: --</div>
+                    <div id="extra-metadata" class="extra-metadata" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Value & Impact Dashboard -->
+        <div class="card business-value-card">
+            <h2>💼 Business Value & Impact Analysis</h2>
+            <p class="business-intro">
+                <strong>🎯 Real-World Applications:</strong> This AQI forecasting system delivers measurable business value across multiple sectors through predictive analytics and proactive decision-making.
+            </p>
+            
+            <!-- Key Impact Metrics -->
+            <div class="impact-metrics">
+                <div class="impact-card health-impact">
+                    <div class="impact-icon">🏥</div>
+                    <div class="impact-content">
+                        <h3>Public Health Protection</h3>
+                        <div class="impact-value" id="health-risk-level">--</div>
+                        <p class="impact-desc">Proactive health advisories for at-risk populations</p>
+                        <div class="impact-stats">
+                            <span id="health-alert-count">0</span> high-risk hours detected in next 24h
+                        </div>
+                    </div>
+                </div>
+
+                <div class="impact-card cost-impact">
+                    <div class="impact-icon">💰</div>
+                    <div class="impact-content">
+                        <h3>Cost Savings Potential</h3>
+                        <div class="impact-value" id="cost-savings">$0</div>
+                        <p class="impact-desc">Estimated healthcare & operational savings</p>
+                        <div class="impact-stats">
+                            Based on predictive maintenance & health interventions
+                        </div>
+                    </div>
+                </div>
+
+                <div class="impact-card operational-impact">
+                    <div class="impact-icon">⚙️</div>
+                    <div class="impact-content">
+                        <h3>Operational Efficiency</h3>
+                        <div class="impact-value" id="efficiency-score">--</div>
+                        <p class="impact-desc">Smart scheduling & resource optimization</p>
+                        <div class="impact-stats">
+                            <span id="optimal-hours">0</span> optimal hours for outdoor activities
+                        </div>
+                    </div>
+                </div>
+
+                <div class="impact-card risk-impact">
+                    <div class="impact-icon">🛡️</div>
+                    <div class="impact-content">
+                        <h3>Risk Mitigation</h3>
+                        <div class="impact-value" id="risk-score">--</div>
+                        <p class="impact-desc">Early warning system for pollution events</p>
+                        <div class="impact-stats">
+                            <span id="warning-hours">0</span> hours advance notice
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Calculator -->
+            <div class="roi-section">
+                <h3>📊 ROI Impact Calculator</h3>
+                <div class="roi-calculator">
+                    <div class="roi-inputs">
+                        <div class="roi-input-group">
+                            <label>Population Affected:</label>
+                            <input type="number" id="population-input" value="100000" min="1000" step="1000">
+                        </div>
+                        <div class="roi-input-group">
+                            <label>Avg Healthcare Cost/Person:</label>
+                            <input type="number" id="healthcare-cost-input" value="50" min="10" step="10">
+                        </div>
+                        <div class="roi-input-group">
+                            <label>Prevention Rate:</label>
+                            <input type="number" id="prevention-rate-input" value="15" min="1" max="100" step="1">
+                            <span class="input-suffix">%</span>
+                        </div>
+                        <button id="calculate-roi-btn" class="btn btn-calculate">Calculate Impact</button>
+                    </div>
+                    <div class="roi-results" id="roi-results" style="display: none;">
+                        <div class="roi-result-item">
+                            <span class="roi-label">Annual Healthcare Savings:</span>
+                            <span class="roi-value" id="annual-savings">$0</span>
+                        </div>
+                        <div class="roi-result-item">
+                            <span class="roi-label">Prevented Health Incidents:</span>
+                            <span class="roi-value" id="prevented-incidents">0</span>
+                        </div>
+                        <div class="roi-result-item">
+                            <span class="roi-label">ROI Multiple:</span>
+                            <span class="roi-value" id="roi-multiple">0x</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Advisory & Recommendations -->
+        <div class="card health-advisory-card" id="health-advisory" style="display: none;">
+            <h2>🏥 Health Advisory & Recommendations</h2>
+            <div class="advisory-grid">
+                <div class="advisory-section">
+                    <h3>⚠️ Current Risk Level</h3>
+                    <div id="current-risk-advisory" class="risk-advisory">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+                <div class="advisory-section">
+                    <h3>📋 Recommended Actions</h3>
+                    <div id="recommended-actions" class="action-list">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+                <div class="advisory-section">
+                    <h3>👥 Vulnerable Groups</h3>
+                    <div id="vulnerable-groups" class="vulnerable-list">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+            <div class="forecast-timeline">
+                <h3>⏰ 24-Hour Risk Timeline</h3>
+                <canvas id="risk-timeline-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- 24-Hour Forecast -->
+        <div class="card">
+            <h2>🔮 24-Hour GRU-Based Future Forecast</h2>
+            <p class="forecast-description">
+                <strong>🧠 AI-Powered Prediction:</strong> Using Gated Recurrent Unit (GRU) neural network to analyze temporal patterns and predict future air quality levels.
+            </p>
+            <div class="forecast-container">
+                <canvas id="forecast-chart"></canvas>
+                <button id="predict-btn" class="btn btn-primary">
+                    <span class="btn-text">🤖 Generate GRU Forecast</span>
+                    <span class="btn-loader" style="display: none;">⏳ GRU Processing...</span>
+                </button>
+                <div id="forecast-stats" class="forecast-stats" style="display: none;">
+                    <div class="stat-item">
+                        <span class="stat-label">Average:</span>
+                        <span id="forecast-avg" class="stat-value">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Peak:</span>
+                        <span id="forecast-peak" class="stat-value">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Minimum:</span>
+                        <span id="forecast-min" class="stat-value">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extended Future Prediction (Multi-Day) -->
+        <div class="card" id="extended-forecast" style="display: none;">
+            <h2>📅 Extended GRU Future Prediction (7-Day Outlook)</h2>
+            <p class="forecast-description">
+                <strong>🔮 Long-term Forecast:</strong> Multi-day air quality predictions using iterative GRU forecasting to project trends up to 7 days ahead.
+            </p>
+            <div class="extended-forecast-controls">
+                <label for="forecast-days">Forecast Duration:</label>
+                <select id="forecast-days">
+                    <option value="3">3 Days (72 hours)</option>
+                    <option value="5">5 Days (120 hours)</option>
+                    <option value="7" selected>7 Days (168 hours)</option>
+                </select>
+                <button id="extended-predict-btn" class="btn btn-secondary">
+                    🔮 Generate Extended Forecast
+                </button>
+            </div>
+            <canvas id="extended-forecast-chart"></canvas>
+            <div id="extended-forecast-summary" class="extended-summary" style="display: none;"></div>
+        </div>
+
+        <!-- Historical Data -->
+        <div class="card">
+            <h2>📈 Historical Data</h2>
+            <div class="filters">
+                <label for="time-range">Time Range:</label>
+                <select id="time-range">
+                    <option value="24">Last 24 Hours</option>
+                    <option value="72">Last 3 Days</option>
+                    <option value="168">Last 7 Days</option>
+                    <option value="720">Last 30 Days</option>
+                </select>
+            </div>
+            <canvas id="history-chart"></canvas>
+        </div>
+
+        <!-- Hourly Pattern Analysis -->
+        <div class="card">
+            <h2>⏰ Hourly Pattern Analysis</h2>
+            <canvas id="hourly-chart"></canvas>
+        </div>
+
+        <!-- Country-wise Analysis (for uploaded data) -->
+        <div class="card" id="country-analysis" style="display: none;">
+            <h2>🌍 Country-wise Air Quality Analysis</h2>
+            <p class="analysis-description">
+                <strong>📊 Geographic Distribution:</strong> Analyzing air quality patterns across different countries in your uploaded dataset.
+            </p>
+            <div class="country-stats" id="country-stats"></div>
+            <canvas id="country-chart"></canvas>
+        </div>
+
+        <!-- Upload Custom Dataset -->
+        <div class="card">
+            <h2>📤 Upload Custom Dataset</h2>
+            <div class="upload-container">
+                <div class="upload-info">
+                    <p>Upload your own air quality CSV file to analyze and forecast.</p>
+                    <p class="upload-format"><strong>Required columns:</strong> Any column with "date" or "time" + Any column with "PM", "AQI", or "pollution"</p>
+                    <p class="upload-example"><em>Examples: Timestamp,PM2.5 | Date,AQI Value | datetime,pollution</em></p>
+                    <p class="upload-note">💡 <strong>Tip:</strong> Open browser console (F12) to see detailed parsing logs</p>
+                    <details class="csv-help">
+                        <summary>❓ Need help with CSV format?</summary>
+                        <div class="csv-help-content">
+                            <h4>Quick CSV Template:</h4>
+                            <pre>Timestamp,PM2.5
+2025-01-01 00:00:00,25.3
+2025-01-01 01:00:00,23.7
+2025-01-01 02:00:00,21.2</pre>
+                            <p><strong>Common Issues:</strong></p>
+                            <ul>
+                                <li>❌ Missing header row (column names)</li>
+                                <li>❌ Column names don't contain "date/time" or "PM"</li>
+                                <li>❌ Only 1-2 rows of data (need at least 24 for good forecasts)</li>
+                                <li>❌ PM2.5 values are text instead of numbers</li>
+                            </ul>
+                            <p><strong>✅ Try the sample file first:</strong> <code>sample_data.csv</code> in this folder</p>
+                        </div>
+                    </details>
+                </div>
+                <div class="upload-area">
+                    <input type="file" id="file-upload" accept=".csv" style="display: none;">
+                    <button id="upload-btn" class="btn btn-upload">
+                        📁 Choose CSV File
+                    </button>
+                    <div id="upload-status" class="upload-status"></div>
+                </div>
+                <div id="dataset-info" class="dataset-info" style="display: none;">
+                    <h3>Dataset Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Records:</span>
+                            <span id="dataset-records" class="info-value">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Date Range:</span>
+                            <span id="dataset-range" class="info-value">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Avg PM2.5:</span>
+                            <span id="dataset-avg" class="info-value">--</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Max PM2.5:</span>
+                            <span id="dataset-max" class="info-value">--</span>
+                        </div>
+                    </div>
+                    <button id="use-dataset-btn" class="btn btn-primary">
+                        ✨ Use This Dataset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Information -->
+        <div class="card">
+            <h2>🧠 About the Model</h2>
+            <div class="model-info">
+                <div class="info-section">
+                    <h3>GRU Neural Network</h3>
+                    <p>This application uses a Gated Recurrent Unit (GRU) neural network to forecast air quality levels. GRU is a type of recurrent neural network that excels at learning patterns in time-series data.</p>
+                </div>
+                <div class="info-section">
+                    <h3>Model Architecture</h3>
+                    <ul>
+                        <li>Input: 24 timesteps × 11 features</li>
+                        <li>GRU Layer 1: 64 units with Dropout & BatchNorm</li>
+                        <li>GRU Layer 2: 32 units with Dropout & BatchNorm</li>
+                        <li>Dense Layers: 32 → 16 → 1</li>
+                        <li>Output: PM2.5 prediction</li>
+                    </ul>
+                </div>
+                <div class="info-section">
+                    <h3>Features Used</h3>
+                    <ul>
+                        <li>PM2.5 levels (target variable)</li>
+                        <li>Cyclical time encoding (hour, day, month)</li>
+                        <li>Weekend indicator</li>
+                        <li>Rolling averages (3h, 6h)</li>
+                        <li>Rolling standard deviation (3h)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Air Quality Forecaster | HSE Neural Networks Project 2025</p>
+            <p class="disclaimer">Note: This is a demonstration using simulated data for educational purposes.</p>
+        </footer>
+    </div>
+
+    <script src="gru_predictor.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

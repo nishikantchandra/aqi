@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Generator - Air Quality Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a90e2;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4a90e2;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #3a7bc8;
+        }
+        .preview {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 CSV Generator for Air Quality App</h1>
+        <p>Create a valid CSV file for testing the Air Quality Forecaster</p>
+
+        <div class="form-group">
+            <label>Number of Hours:</label>
+            <input type="number" id="hours" value="48" min="24" max="720">
+            <small>Minimum 24 hours recommended for good forecasts</small>
+        </div>
+
+        <div class="form-group">
+            <label>Start Date:</label>
+            <input type="datetime-local" id="startDate" value="2025-01-01T00:00">
+        </div>
+
+        <div class="form-group">
+            <label>Average PM2.5 Level:</label>
+            <input type="number" id="avgPM25" value="35" min="5" max="200">
+            <small>Typical range: 5-200 µg/m³</small>
+        </div>
+
+        <button onclick="generateCSV()">📊 Generate CSV</button>
+        <button onclick="downloadCSV()" id="downloadBtn" style="display:none;">💾 Download CSV</button>
+
+        <div id="preview" class="preview" style="display:none;"></div>
+        <div id="success" class="success" style="display:none;"></div>
+    </div>
+
+    <script>
+        let csvContent = '';
+
+        function generateCSV() {
+            const hours = parseInt(document.getElementById('hours').value);
+            const startDate = new Date(document.getElementById('startDate').value);
+            const avgPM25 = parseFloat(document.getElementById('avgPM25').value);
+
+            let csv = 'Timestamp,PM2.5\n';
+            
+            for (let i = 0; i < hours; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setHours(currentDate.getHours() + i);
+                
+                // Generate realistic PM2.5 values with daily pattern
+                const hour = currentDate.getHours();
+                let pm25 = avgPM25;
+                
+                // Daily pattern (higher during rush hours)
+                pm25 += Math.sin((hour - 6) / 24 * Math.PI * 2) * 15;
+                
+                // Rush hour spikes
+                if (hour >= 7 && hour <= 9) pm25 += 10;
+                if (hour >= 17 && hour <= 19) pm25 += 12;
+                
+                // Random variation
+                pm25 += (Math.random() - 0.5) * 10;
+                
+                // Keep realistic
+                pm25 = Math.max(5, Math.min(200, pm25));
+                
+                const timestamp = currentDate.toISOString().replace('T', ' ').substring(0, 19);
+                csv += `${timestamp},${pm25.toFixed(1)}\n`;
+            }
+
+            csvContent = csv;
+
+            // Show preview (first 10 lines)
+            const lines = csv.split('\n').slice(0, 11).join('\n');
+            document.getElementById('preview').textContent = lines + '\n... (' + hours + ' total rows)';
+            document.getElementById('preview').style.display = 'block';
+            
+            document.getElementById('downloadBtn').style.display = 'inline-block';
+            
+            document.getElementById('success').innerHTML = `
+                ✅ CSV Generated Successfully!<br>
+                <strong>${hours} hours</strong> of data from <strong>${startDate.toLocaleString()}</strong><br>
+                Click "Download CSV" to save the file.
+            `;
+            document.getElementById('success').style.display = 'block';
+        }
+
+        function downloadCSV() {
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'air_quality_data.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            alert('✅ CSV file downloaded! Now upload it to the Air Quality Forecaster app.');
+        }
+
+        // Set default date to today
+        window.onload = function() {
+            const now = new Date();
+            now.setHours(0, 0, 0, 0);
+            const dateStr = now.toISOString().substring(0, 16);
+            document.getElementById('startDate').value = dateStr;
+        };
+    </script>
+</body>
+</html>
